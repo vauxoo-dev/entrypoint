@@ -14,18 +14,27 @@ Install from the build
 The entry point can be installed automatically during the build stage of you image just add the following in your Dockerfile:
 
 ```dockerfile
-RUN wget -O- https://raw.githubusercontent.com/OrchestSh/entrypoint/master/installer.sh | sh
+ARG GITHUB_TOKEN=""
+RUN if [ -n "$GITHUB_TOKEN" ]; then \
+        wget --header="Authorization: token $GITHUB_TOKEN" -O- https://raw.githubusercontent.com/OrchestSh/entrypoint/master/installer.sh | GITHUB_TOKEN="$GITHUB_TOKEN" sh ; \
+    else \
+        wget -O- https://raw.githubusercontent.com/OrchestSh/entrypoint/master/installer.sh | sh ; \
+    fi
 ...
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 CMD ["/entrypoint"]
 ```
 
-This will download and deploy the entry_point in the ```/``` path 
+This will download and deploy the entry_point in the ```/``` path.
+
+If `GITHUB_TOKEN` is passed as a build arg, `installer.sh` will use it to authenticate against GitHub API (`api.github.com`), avoiding rate limit errors in CI/CD environments. 
 
 Environment variables
 --
 
 The entry_point can be tuned using any of the following env vars:
+
+```GITHUB_TOKEN```: If set, `installer.sh` will use this token to authenticate requests against the GitHub API (`api.github.com`) to query releases and avoid unauthenticated rate limits (60 req/hour vs 5,000 req/hour).
 
 ```DEBUG_ENTRYPOINT```: Will log debug output and be more verbose
 

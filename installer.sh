@@ -13,22 +13,30 @@ get_arch() {
   echo ${arch}
 }
 
+wget_auth() {
+    if [ -n "${GITHUB_TOKEN}" ]; then
+        wget --header="Authorization: token ${GITHUB_TOKEN}" "$@"
+    else
+        wget "$@"
+    fi
+}
+
 download_url() {
     api_url=$1
     url_for=$2
-    wget -q -O- ${api_url}  | grep browser_download_url | grep ${url_for} | sed '/-/!{s/$/_/}' | sort -V | sed 's/_$//' | tail -n 1 |  awk '{print $2}' | tr -d '"' | tr -d ','
+    wget_auth -q -O- ${api_url}  | grep browser_download_url | grep ${url_for} | sed '/-/!{s/$/_/}' | sort -V | sed 's/_$//' | tail -n 1 |  awk '{print $2}' | tr -d '"' | tr -d ','
 }
 
 get_filename() {
     api_url=$1
     url_for=$2
-    wget -q -O- ${api_url}  | grep name | grep ${url_for} | sed '/-/!{s/$/_/}' | sort -V | sed 's/_$//' | tail -n 1 |  awk '{print $2}' |  tr -d '"' | tr -d ','
+    wget_auth -q -O- ${api_url}  | grep name | grep ${url_for} | sed '/-/!{s/$/_/}' | sort -V | sed 's/_$//' | tail -n 1 |  awk '{print $2}' |  tr -d '"' | tr -d ','
 }
 
 
 release_version() {
     api_url=$1
-    wget -q -O- ${api_url}  | grep tag_name | sed '/-/!{s/$/_/}' | sort -V | sed 's/_$//' | tail -n 1 |  awk '{print $2}' |  tr -d '"' | tr -d ','
+    wget_auth -q -O- ${api_url}  | grep tag_name | sed '/-/!{s/$/_/}' | sort -V | sed 's/_$//' | tail -n 1 |  awk '{print $2}' |  tr -d '"' | tr -d ','
 }
 
 check_sha() {
@@ -60,7 +68,7 @@ FULLNAME=$(get_filename ${API_URL} ${OS}_${ARCH})
 download() {
     url=$1
     dest=$2
-    wget -q -O ${dest} "${url}"
+    wget_auth -q -O ${dest} "${url}"
 }
 
 echo "Version ${TAG} will be installed"
